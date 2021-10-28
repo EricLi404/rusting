@@ -2,5 +2,6 @@
 
 members = [
     "scrape_url",
-    "httpie"
+    "httpie",
+    "dev"
 ]
