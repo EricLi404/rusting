@@ -13,19 +13,16 @@ cargo build -p first_impression --release
 ./target/release/first_impression
 ```
 
-
-## wow_aes
-
+## httpie
 ```shell
-# 创建
-cargo new wow_aes
+cargo build -p httpie --release
 
-# 编译
-cargo build -p wow_aes --release
+# get
+./target/release/httpie get https://postman-echo.com/get?foo1=bar1&foo2=bar2
 
-./target/release/wow_aes
+# post
+./target/release/httpie post https://postman-echo.com/post a=1 b=2
 ```
-
 
 ## scrape_url
 
@@ -41,13 +38,14 @@ cargo build -p scrape_url --release
 ```
 
 
-## httpie
+## wow_aes
+
 ```shell
-cargo build -p httpie --release
+# 创建
+cargo new wow_aes
 
-# get
-./target/release/httpie get https://postman-echo.com/get?foo1=bar1&foo2=bar2
+# 编译
+cargo build -p wow_aes --release
 
-# post
-./target/release/httpie post https://postman-echo.com/post a=1 b=2
+./target/release/wow_aes
 ```
