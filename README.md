@@ -1,5 +1,19 @@
 # rusting
 
+## 
+
+
+```shell
+
+# 升级 rust
+rustup update
+
+# 修改 Cargo.toml 后运行，更新库依赖
+cargo update
+
+```
+
+
 
 ## first_impression
 
@@ -15,7 +29,10 @@ cargo build -p first_impression --release
 
 ## httpie
 ```shell
+
 cargo build -p httpie --release
+
+cargo run -p httpie -- get https://postman-echo.com/get?foo1=bar1&foo2=bar2
 
 # get
 ./target/release/httpie get https://postman-echo.com/get?foo1=bar1&foo2=bar2

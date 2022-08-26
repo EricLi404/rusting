@@ -1,9 +1,10 @@
 use anyhow::{anyhow, Result};
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use colored::Colorize;
 use mime::Mime;
 use reqwest::{header, Client, Response, Url};
 use std::{collections::HashMap, str::FromStr};
+use reqwest::header::HeaderValue;
 use syntect::{
     easy::HighlightLines,
     highlighting::{Style, ThemeSet},
@@ -17,16 +18,15 @@ use syntect::{
 // 下面 /// 的注释是文档，clap 会将其作为 CLI 的帮助
 
 /// A naive httpie implementation with Rust.
-#[derive(Clap, Debug)]
-#[clap(version = "1.0", author = "EricLi404 <leiflly@outlook.com>")]
-#[clap(setting = AppSettings::ColoredHelp)]
+#[derive(Parser, Debug)]
+#[clap(author = "EricLi404 <leiflly@outlook.com>", version = "1.0", )]
 struct Opts {
     #[clap(subcommand)]
     subcmd: SubCommand,
 }
 
 // 子命令分别对应不同的 HTTP 方法，目前只支持 get / post
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 enum SubCommand {
     Get(Get),
     Post(Post),
@@ -36,7 +36,7 @@ enum SubCommand {
 // get 子命令
 
 /// feed get with an url and we will retrieve the response for you
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 struct Get {
     /// HTTP 请求的 URL
     #[clap(parse(try_from_str = parse_url))]
@@ -47,7 +47,7 @@ struct Get {
 
 /// feed post with an url and optional key=value pairs. We will post the data
 /// as JSON, and retrieve the response for you
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 struct Post {
     /// HTTP 请求的 URL
     #[clap(parse(try_from_str = parse_url))]
@@ -125,33 +125,50 @@ fn print_headers(resp: &Response) {
     println!();
 }
 
-/// 打印服务器返回的 HTTP body
-fn print_body(m: Option<Mime>, body: &str) {
-    match m {
-        // 对于 "application/json" 我们 pretty print
-        Some(v) if v == mime::APPLICATION_JSON => print_syntect(body, "json"),
-        Some(v) if v == mime::TEXT_HTML => print_syntect(body, "html"),
-
-        // 其它 mime type，我们就直接输出
-        _ => println!("{}", body),
+fn get_print_type(resp: &Response) -> &str {
+    match resp.headers().get(header::CONTENT_TYPE) {
+        Some(content_type) => {
+            if let Ok(c_str) = content_type.to_str() {
+                if let Ok(m) = Mime::from_str(c_str) {
+                    match m {
+                        mime::APPLICATION_JSON => "json",
+                        mime::TEXT_HTML => "html",
+                    };
+                }
+            }
+        }
+        None => (),
     }
+    "txt"
 }
+
+// async fn print_body(resp: &Response) -> Result<()> {
+//     let body = resp.text().await?;
+//     match resp.headers().get(header::CONTENT_TYPE) {
+//         Some(content_type)=>{
+//             if let Ok(c_str) = content_type.to_str() {
+//                 if let Ok(m) = Mime::from_str(c_str) {
+//                     match m {
+//                         mime::APPLICATION_JSON => "json",
+//                         mime::TEXT_HTML => "html",
+//                     };
+//                 }
+//             }
+//         },
+//         None=> print_syntect("txt",&body),
+//     }
+//     Ok(())
+// }
+
 
 /// 打印整个响应
 async fn print_resp(resp: Response) -> Result<()> {
     print_status(&resp);
     print_headers(&resp);
-    let mime = get_content_type(&resp);
+    let p_type = get_print_type(&resp);
     let body = resp.text().await?;
-    print_body(mime, &body);
+    print_syntect(&p_type, &body);
     Ok(())
-}
-
-/// 将服务器返回的 content-type 解析成 Mime 类型
-fn get_content_type(resp: &Response) -> Option<Mime> {
-    resp.headers()
-        .get(header::CONTENT_TYPE)
-        .map(|v| v.to_str().unwrap().parse().unwrap())
 }
 
 /// 程序的入口函数，因为在 http 请求时我们使用了异步处理，所以这里引入 tokio
@@ -174,6 +191,7 @@ async fn main() -> Result<()> {
 }
 
 fn print_syntect(s: &str, ext: &str) {
+    println!("======{},{}", s, ext);
     // Load these once at the start of your program
     let ps = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();
