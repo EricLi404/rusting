@@ -1,9 +1,10 @@
 [workspace]
 
 members = [
-    "scrape_url",
-    "httpie",
     "dev",
     "first_impression",
+    "httpie",
+    "scrape_url",
+    "thumbor",
     "wow_aes"
 ]
