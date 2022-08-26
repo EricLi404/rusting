@@ -3,5 +3,7 @@
 members = [
     "scrape_url",
     "httpie",
-    "dev"
+    "dev",
+    "first_impression",
+    "wow_aes"
 ]
